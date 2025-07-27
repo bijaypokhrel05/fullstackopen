@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant Browser
+    participant Server
+
+    
+    Browser->>Server: POST /exampleapp/new_note
+    Note right of Browser: Payload: content=hello
+    Server-->>Browser: 302 Found (Redirect to /exampleapp/notes)
+
+    
+    Browser->>Server: GET /exampleapp/notes
+    Server-->>Browser: 304 Not Modified
+
+    
+    Browser->>Server: GET /exampleapp/main.css
+    Server-->>Browser: 304 Not Modified
+
+    
+    Browser->>Server: GET /exampleapp/main.js
+    Server-->>Browser: 304 Not Modified
+
+    
+    Browser->>Server: GET /exampleapp/data.json
+    Server-->>Browser: 200 OK (JSON data)
+
+    Note over Browser: Page fully rendered with HTML, CSS, JS, and JSON data
+    Note over Browser: "hello" is now shown in the note list on the page
