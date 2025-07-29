@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant User
+    participant Browser
+    participant Server
+
+    User->>Browser: Writes note and submits form
+    Browser->>Server: POST /exampleapp/new_note (note content)
+    Server-->>Browser: 201 Created or 200 OK (acknowledgment)
+    Browser->>Browser: Update UI with new note (DOM manipulation)
