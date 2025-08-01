@@ -1,1 +1,1 @@
-Solutions of part 1 exercises to this folder, one app per folder
+Solutions of part 1 courseinfo exercises to this folder.
