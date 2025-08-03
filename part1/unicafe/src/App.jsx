@@ -12,28 +12,28 @@ function App() {
   };
 
   function Statistics ({ label, noOfReview }) {
-    return <>{label} {noOfReview}<br></br></>
+    return <tr>
+      <td>{label}</td>
+      <td>{noOfReview}</td>
+    </tr>
   }
   return (
     <>
-    <b>
-
       <h1 id = "title">give feedback</h1>
       <Button onclickFunc = {() => setGood(good + 1)} label = 'good' />
       <Button onclickFunc = {() => setNeutral(neutral + 1)} label = 'neutral' />
       <Button onclickFunc = {() => setBad(bad + 1)} label = 'bad' />
       <h1 id = "subtitle">statistics</h1>
       {!(good + neutral + bad) ? (<p>No feedback given</p>) :(
-        <div>
+        <table>
         <Statistics label = 'good' noOfReview = {good} />
         <Statistics label = 'neutral' noOfReview = {neutral} />
         <Statistics label = 'bad' noOfReview = {bad} />
         <Statistics label = 'all' noOfReview = {good + neutral + bad} />
         <Statistics label = 'average' noOfReview = {(good - bad) / (good + neutral + bad)} />
         <Statistics label = 'positive' noOfReview = {`${(good / (good + neutral + bad) * 100)} %`} />
-      </div>
+      </table>
       )}
-      </b>
     </>
   )
 }
