@@ -12,10 +12,10 @@ function App() {
   };
 
   function Statistics ({ label, noOfReview }) {
-    return <tr>
+    return (<tr>
       <td>{label}</td>
       <td>{noOfReview}</td>
-    </tr>
+    </tr>);
   }
   return (
     <>
@@ -26,12 +26,14 @@ function App() {
       <h1 id = "subtitle">statistics</h1>
       {!(good + neutral + bad) ? (<p>No feedback given</p>) :(
         <table>
-        <Statistics label = 'good' noOfReview = {good} />
-        <Statistics label = 'neutral' noOfReview = {neutral} />
-        <Statistics label = 'bad' noOfReview = {bad} />
-        <Statistics label = 'all' noOfReview = {good + neutral + bad} />
-        <Statistics label = 'average' noOfReview = {(good - bad) / (good + neutral + bad)} />
-        <Statistics label = 'positive' noOfReview = {`${(good / (good + neutral + bad) * 100)} %`} />
+          <tbody>
+            <Statistics label = 'good' noOfReview = {good} />
+            <Statistics label = 'neutral' noOfReview = {neutral} />
+            <Statistics label = 'bad' noOfReview = {bad} />
+            <Statistics label = 'all' noOfReview = {good + neutral + bad} />
+            <Statistics label = 'average' noOfReview = {(good - bad) / (good + neutral + bad)} />
+            <Statistics label = 'positive' noOfReview = {`${(good / (good + neutral + bad) * 100)} %`} />
+          </tbody>
       </table>
       )}
     </>
