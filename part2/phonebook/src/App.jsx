@@ -9,7 +9,7 @@ const App = () => {
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
 
-  const baseUrl = 'http://localhost:3001/persons';
+  const baseUrl = 'api/persons';
 
   // GET all persons
   useEffect(() => {

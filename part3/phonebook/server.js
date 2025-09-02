@@ -1,10 +1,17 @@
 // importing the express depedencies
 const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
 
 const app = express();
 
-//for using the post request we have to use json middleware
 app.use(express.json());
+app.use(cors());
+app.use(express.static('dist'));
+//using morgan middleware for request logger
+app.use(morgan('dev'));
+
+//for using the post request we have to use json middleware
 let persons = [
     { 
       "id": "1",
@@ -81,6 +88,6 @@ app.post('/api/persons', (req, res) => {
 })
 
 
-const port = 3001;
+const port = process.env.PORT?process.env.PORT:3001;
 
 app.listen(port, () => console.log(`Server running at http://localhost:${port}`));
