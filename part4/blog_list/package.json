@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "corss-env NODE_ENV=production node index.js",
-    "dev": "corss-env NODE_ENV=development node --watch index.js",
+    "dev": "cross-env NODE_ENV=development node --watch index.js",
     "test": "cross-env NODE_ENV=test node --test"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "cross-env": "^10.0.0",
     "dotenv": "^17.2.2",

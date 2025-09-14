@@ -1,5 +1,5 @@
 const app = require('../app');
-const Blog = require('../model/blog');
+const Blog = require('../models/blog');
 const supertest = require('supertest');
 const assert = require('node:assert');
 const { test, before, beforeEach, after } = require('node:test');
@@ -8,14 +8,14 @@ const mongoose = require('mongoose');
 const api = supertest(app);
 
 before(async () => {
-    const { MONGODB_URL } = require('../utils/config')
+    const { MONGODB_URL } = require('../utils/config');
     await mongoose.connect(MONGODB_URL);
 });
 
 beforeEach(async () => {
     await Blog.deleteMany({});
 
-    let newObject = new Blog(
+    const newObject1 = new Blog(
         {
             title: 'Go To Statement Considered Harmful',
             author: 'Edsger W. Dijkstra',
@@ -23,9 +23,8 @@ beforeEach(async () => {
             likes: 5
         }
     )
-    await newObject.save();
-
-    newObject = new Blog(
+    
+    const newObject2 = new Blog(
         {
             title: "Canonical string reduction",
             author: "Edsger W. Dijkstra",
@@ -33,7 +32,8 @@ beforeEach(async () => {
             likes: 12
         }
     )
-    await newObject.save();
+    await newObject1.save();
+    await newObject2.save();
 });
 
 test('blogs are returned as JSON and correct amount', async () => {
