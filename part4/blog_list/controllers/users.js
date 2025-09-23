@@ -27,7 +27,7 @@ usersRouter.post('/', async (req, res) => {
         })
 
         await user.save();
-        res.status(201).json(user);
+        return res.status(201).json(user);
     } catch (error) {
         console.log("Error", error);
     }
@@ -44,10 +44,10 @@ usersRouter.get('/', async (req, res) => {
                 id: user._id
             }
         });
-        res.status(200).json(allUsers);
+        return res.status(200).json(allUsers);
     } catch(error) {
         logger.error(error);
-        res.status(500).json({ error: 'Something went wrong while fetching users' });
+        return res.status(500).json({ error: 'Something went wrong while fetching users' });
     }
 });
 

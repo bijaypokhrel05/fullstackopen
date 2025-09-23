@@ -1,81 +1,81 @@
-const Blog = require('../models/blog');
-const User = require('./users');
 const blogsRouter = require('express').Router();
+const Blog = require('../models/blog');
+const { userExtractor } = require('../utils/middleware');
 
+// Get all blogs
 blogsRouter.get('/', async (req, res, next) => {
-    try {
-        const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 });
-        res.json(blogs);
-    } catch (err) {
-        next(err);
-    }
+  try {
+    const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 });
+    res.json(blogs);
+  } catch (err) {
+    next(err);
+  }
 });
 
-blogsRouter.post('/', async (req, res, next) => {
-    try {
-        const { title, author, url, likes, userId } = req.body;
+// Create a new blog
+blogsRouter.post('/', userExtractor, async (req, res) => {
+  const { title, author, url, likes } = req.body;
 
-        const user = await User.findById(userId);
+  if (!req.user) {
+    return res.status(401).json({ error: 'user not authenticated' });
+  }
 
-        if (!user) {
-            return res.status(400).json({ error: 'User not found' });
-        }
+  const blog = new Blog({
+    title,
+    author,
+    url,
+    likes: likes || 0,
+    user: req.user._id,
+  });
 
-        const newBlog = new Blog({
-            title,
-            author,
-            url,
-            likes: likes || 0,
-            user: user._id
-        });
+  const savedBlog = await blog.save();
+  req.user.blogs = req.user.blogs.concat(savedBlog._id);
+  await req.user.save();
 
-        const savedBlog = await newBlog.save();
-
-        user.blogs = user.blogs.concat(savedBlog._id);
-        await user.save();
-
-        const populatedBlog = await savedBlog.populate('user', {username: 1, name: 1})
-        res.status(201).json(populatedBlog);
-    } catch (err) {
-        next(err);
-    }
+  res.status(201).json(savedBlog);
 });
 
-blogsRouter.delete('/:id', async (req, res, next) => {
-    try {
-        const blogId = req.params.id;
-        const deletedBlog = await Blog.findByIdAndDelete(blogId);
 
-        if (!deletedBlog) {
-            return res.status(404).json({ error: 'Blog not found' });
-        }
+// Delete a blog
+blogsRouter.delete('/:id', userExtractor, async (req, res, next) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
 
-        res.status(204).end();
-    } catch (error) {
-        next(error);
+    if (!blog) {
+      return res.status(404).json({ error: 'blog not found' });
     }
 
+    if (!req.user || blog.user.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ error: 'not authorized to delete this blog' });
+    }
+
+    await Blog.findByIdAndDelete(req.params.id);
+
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
 });
 
-blogsRouter.put('/:id', async (req, res, next) => {
-    try {
-        const blogId = req.params.id;
-        const body = req.body;
-        const updatedBlog = await Blog.findByIdAndUpdate(blogId, {
-            title: body.title,
-            author: body.author,
-            url: body.url,
-            likes: body.likes
-        },
-            { new: true, runValidators: true, context: 'query' });
+// Update a blog
+blogsRouter.put('/:id', userExtractor, async (req, res, next) => {
+  try {
+    const { title, author, url, likes } = req.body;
 
-        if (!updatedBlog) {
-            return res.status(404).json({ error: 'Blog not found' });
-        }
-        res.json(updatedBlog);
-    } catch (error) {
-        next(error);
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      { title, author, url, likes },
+      { new: true, runValidators: true, context: 'query' }
+    );
+
+    if (!updatedBlog) {
+      return res.status(404).json({ error: 'blog not found' });
     }
+
+    res.json(updatedBlog);
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = blogsRouter;

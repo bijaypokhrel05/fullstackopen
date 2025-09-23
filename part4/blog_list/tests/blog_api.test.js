@@ -141,6 +141,10 @@ test ('a blog can be updated', async () => {
     assert.strictEqual(blogAfterUpdate.likes, needToUpdate.likes + 10);
 });
 
+test ('add blogs with unauthorized user will fails', () => {
+    
+});
+
 after(async () => {
     await mongoose.connection.close();
 })
