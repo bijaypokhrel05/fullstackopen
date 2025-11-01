@@ -8,14 +8,26 @@ const App = () => {
 
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
+  const [notification, setNotification] = useState({ message: null, type: null });
 
   const baseUrl = 'api/persons';
+
+  // Notification helper functions
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification({ message: null, type: null });
+    }, 5000);
+  };
 
   // GET all persons
   useEffect(() => {
     axios.get(baseUrl)
       .then(response => setPersons(response.data))
-      .catch(err => console.log(err));
+      .catch(err => {
+        console.log(err);
+        showNotification('Failed to fetch contacts from server', 'error');
+      });
   }, []);
 
   // POST new person
@@ -34,8 +46,18 @@ const App = () => {
             ));
             setNewName('');
             setNewNumber('');
+            showNotification(`Updated ${newName}'s number`, 'success');
           })
-          .catch(err => console.log(err));
+          .catch(err => {
+            if (err.response && err.response.status === 404) {
+              showNotification(`Information of ${newName} has already been removed from server`, 'error');
+              setPersons(persons.filter(person => person.id !== existingPerson.id));
+            } else if (err.response && err.response.status === 400) {
+              showNotification(err.response.data.error || 'Validation error', 'error');
+            } else {
+              showNotification(`Failed to update ${newName}`, 'error');
+            }
+          });
       }
       return;
     }
@@ -46,8 +68,15 @@ const App = () => {
         setPersons([...persons, response.data]);
         setNewName('');
         setNewNumber('');
+        showNotification(`Added ${newName}`, 'success');
       })
-      .catch(err => console.log(err));
+      .catch(err => {
+        if (err.response && err.response.data.error) {
+          showNotification(err.response.data.error, 'error');
+        } else {
+          showNotification(`Failed to add ${newName}`, 'error');
+        }
+      });
   }
 
   // DELETE a person
@@ -56,10 +85,15 @@ const App = () => {
       axios.delete(`${baseUrl}/${id}`)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id));
+          showNotification(`Deleted ${name}`, 'success');
         })
         .catch(err => {
-          console.log(err);
-          alert(`Failed to delete ${name}.`);
+          if (err.response && err.response.status === 404) {
+            showNotification(`Information of ${name} has already been removed from server`, 'error');
+            setPersons(persons.filter(person => person.id !== id));
+          } else {
+            showNotification(`Failed to delete ${name}`, 'error');
+          }
         });
     }
   }
@@ -69,11 +103,34 @@ const App = () => {
     person.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Notification component
+  const Notification = ({ notification }) => {
+    if (!notification.message) return null;
+
+    const notificationStyle = {
+      padding: '10px',
+      marginBottom: '20px',
+      borderRadius: '5px',
+      border: `2px solid ${notification.type === 'success' ? 'green' : 'red'}`,
+      backgroundColor: notification.type === 'success' ? '#d4edda' : '#f8d7da',
+      color: notification.type === 'success' ? '#155724' : '#721c24',
+    };
+
+    return (
+      <div style={notificationStyle}>
+        {notification.message}
+      </div>
+    );
+  };
+
   return (
-    <div>
+    <div className="container">
       <h2>Phonebook</h2>
-      <div>
-        filter shown with <input
+      <Notification notification={notification} />
+      <div className="filter-section">
+        <label htmlFor="filter">Filter shown with: </label>
+        <input
+          id="filter"
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -81,25 +138,43 @@ const App = () => {
       </div>
 
       <h2>Add a New</h2>
-      <form onSubmit={submitHandler}>
-        <div>
-          name: <input value={newName} onChange={e => setNewName(e.target.value)} />
+      <form onSubmit={submitHandler} className="form">
+        <div className="form-group">
+          <label htmlFor="name">Name: </label>
+          <input 
+            id="name"
+            value={newName} 
+            onChange={e => setNewName(e.target.value)} 
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="number">Number: </label>
+          <input 
+            id="number"
+            value={newNumber} 
+            onChange={e => setNewNumber(e.target.value)} 
+          />
         </div>
         <div>
-          number: <input value={newNumber} onChange={e => setNewNumber(e.target.value)} />
-        </div>
-        <div>
-          <button type="submit">add</button>
+          <button type="submit" className="btn-add">add</button>
         </div>
       </form>
 
       <h2>Numbers</h2>
-      {filteredPersons.map(person => (
-        <p key={person.id}>
-          {person.name} {person.number}
-          <button onClick={() => handleDelete(person.id, person.name)}>delete</button>
-        </p>
-      ))}
+      <div className="numbers-list">
+        {filteredPersons.map(person => (
+          <div key={person.id} className="person-item">
+            <span className="person-name">{person.name}</span>
+            <span className="person-number">{person.number}</span>
+            <button 
+              onClick={() => handleDelete(person.id, person.name)}
+              className="btn-delete"
+            >
+              delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

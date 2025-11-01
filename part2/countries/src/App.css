@@ -1,0 +1,23 @@
+.container {
+  padding: 10px;
+}
+
+.search-section {
+  margin-bottom: 10px;
+}
+
+.country-item {
+  margin-bottom: 5px;
+}
+
+.country-item button {
+  margin-left: 10px;
+}
+
+.country-details {
+  margin-top: 20px;
+}
+
+.flag {
+  width: 200px;
+}

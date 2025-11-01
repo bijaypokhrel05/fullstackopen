@@ -1,11 +1,36 @@
+.container {
+  padding: 10px;
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.filter-section {
+  margin-bottom: 10px;
+}
+
+.form {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  margin-bottom: 5px;
+}
+
 button {
-    margin-left: 4px;
-    border-radius: 5px;
-    border: none;
-    padding: 4px;
-    background-color:antiquewhite;
+  margin-left: 4px;
+  border-radius: 5px;
+  border: none;
+  padding: 4px;
+  background-color: antiquewhite;
 }
 
 button:hover {
-    background-color: blue;
+  background-color: blue;
+}
+
+.person-item {
+  margin-bottom: 5px;
 }
