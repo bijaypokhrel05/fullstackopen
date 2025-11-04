@@ -71,7 +71,7 @@ app.delete('/api/persons/:id', (req, res, next) => {
         } else {
             res.status(404).send('Person Not Found!');
         }
-    }).catch(err => next(er));
+    }).catch(err => next(err));
 
 })
 

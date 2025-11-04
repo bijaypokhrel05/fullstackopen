@@ -19,7 +19,7 @@ usersRouter.post('/', async (req, res) => {
             return res.status(400).json({ error: 'username must be unique'})
         }
         
-        const passwordHash = await bcrypt.hash(body.password, 10);
+        const passwordHash = await bcrypt.hash(password, 10);
         const user = new User({
             username,
             password: passwordHash,
@@ -29,7 +29,11 @@ usersRouter.post('/', async (req, res) => {
         await user.save();
         return res.status(201).json(user);
     } catch (error) {
-        console.log("Error", error);
+        if (error.name === 'MongoServerError' && error.code === 11000) {
+            return res.status(400).json({ error: 'username must be unique' });
+        }
+        logger.error(error);
+        return res.status(500).json({ error: 'error creating user' });
     }
 });
 
