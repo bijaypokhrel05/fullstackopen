@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Link, Routes, Route } from 'react-router';
+import { BrowserRouter as Router, Link, Routes, Route, useParams } from 'react-router';
 
 const Menu = ({anecdotes}) => {
   const padding = {
@@ -16,6 +16,7 @@ const Menu = ({anecdotes}) => {
           <Route path='/' element={<AnecdoteList anecdotes={anecdotes} />} />
           <Route path='/create' element={<CreateNew />} />
           <Route path='/about' element={<About />} />
+          <Route path='/:id' element={<InsideContent anecdotes={anecdotes} />} />
       </Routes>
     </Router>
   )
@@ -25,10 +26,30 @@ const AnecdoteList = ({ anecdotes }) => (
   <div>
     <h2>Anecdotes</h2>
     <ul>
-      {anecdotes.map(anecdote => <li key={anecdote.id} >{anecdote.content}</li>)}
+      {anecdotes.map(anecdote => (
+        <li key={anecdote.id} >
+          <Link to={`/${anecdote.id}`}>{anecdote.content}</Link>
+        </li>)
+      )}
     </ul>
   </div>
 )
+
+const InsideContent = ({anecdotes}) => {
+  const { id } = useParams();
+  const anecdote = anecdotes.find(anecdote => anecdote.id === Number(id));
+  
+  if (!anecdote) {
+    return <p>Anecdote not found</p>;
+  }
+
+  return (
+    <>
+      <h2>{anecdote.content} by {anecdote.author}</h2>
+      <p>has {anecdote.votes} votes</p>
+    </>
+  )
+}
 
 const About = () => (
   <div>
@@ -134,9 +155,6 @@ const App = () => {
     <div>
       <h1>Software anecdotes</h1>
       <Menu anecdotes={anecdotes}/>
-      {/* <AnecdoteList anecdotes={anecdotes} />
-      <About />
-      <CreateNew addNew={addNew} /> */}
       <Footer />
     </div>
   )
