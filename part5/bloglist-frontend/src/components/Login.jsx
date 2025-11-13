@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-function Login({ setIsLoggedOut }) {
+function Login({ setIsLoggedOut, setName}) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
@@ -11,6 +11,7 @@ function Login({ setIsLoggedOut }) {
             const response = await axios.post('/api/login', { username, password });
             if (response.status === 200) {
                 alert(`The user ${response.data.username} is loggedin`);
+                setName(axios.get('/api/users').then(response => setName(response.data.find(user => user.username === username).name)));
                 setIsLoggedOut(false);
             }
         } catch (error) {

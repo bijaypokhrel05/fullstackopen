@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import Blog from './components/Blog'
+import Blog from './components/Blog';
 import blogService from './services/blogs';
 import Login from './components/Login';
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
+  const [name, setName] = useState('');
   const [isLoggedOut, setIsLoggedOut] = useState(true);
 
   useEffect(() => {
@@ -15,10 +16,14 @@ const App = () => {
 
   return (
     <div>
-      {isLoggedOut && <Login setIsLoggedOut={setIsLoggedOut} />}
-      {!isLoggedOut && (
+      {isLoggedOut ? <Login setIsLoggedOut={setIsLoggedOut} setName={setName} />
+       : (
         <div>
           <h2>blogs</h2>
+          <p>
+            {name} is logged in 
+            <button onClick={() => setIsLoggedOut(true)}>logout</button>
+          </p>
           {blogs.map(blog =>
             <Blog key={blog.id} blog={blog} />
           )}
