@@ -22,7 +22,7 @@ const App = () => {
 
   return (
     <div>
-      {isLoggedOut ? <Login setIsLoggedOut={setIsLoggedOut} setName={setName} />
+      {isLoggedOut ? <Login setIsLoggedOut={setIsLoggedOut} setName={setName} setNotification={setNotification}/>
        : (
         <div>
           <h2>blogs</h2>

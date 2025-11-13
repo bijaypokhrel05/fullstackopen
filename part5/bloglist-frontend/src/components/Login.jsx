@@ -1,9 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
 
-function Login({ setIsLoggedOut, setName}) {
+function Login({ setIsLoggedOut, setName }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [notification, setNotification] = useState(null);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -16,13 +17,28 @@ function Login({ setIsLoggedOut, setName}) {
                 setIsLoggedOut(false);
             }
         } catch (error) {
-            alert('Login failed: ' + error.response?.data?.error || error.message);
+            setNotification('wrong username or password');
+            const status = error.response.status;
+            if (status === 401) {
+                console.error('Unauthorized! Please login.');
+            } else if (status === 500) {
+                console.error('Server error! Try again later.');
+            } else {
+                console.error('Some other error', error.response.data);
+            }
         }
     }
+
+    setTimeout(() => {
+        setNotification(null);
+    }, 5000);
 
     return (
         <>
             <h1>log in to application</h1>
+            {notification && 
+                <p style={{backgroundColor: 'silver', color: 'red', fontSize: '20px', width: 'auto', height: '45px', borderRadius: '5px', border: '3px solid red', paddingLeft: '10px', display: 'flex', alignItems: 'center'}}>
+                    {notification}</p> }
             <form onSubmit={handleSubmit}>
                 <div>
                     <label>username</label>
