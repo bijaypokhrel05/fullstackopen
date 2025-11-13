@@ -11,6 +11,7 @@ function Login({ setIsLoggedOut, setName}) {
             const response = await axios.post('/api/login', { username, password });
             if (response.status === 200) {
                 alert(`The user ${response.data.username} is loggedin`);
+                localStorage.setItem('token', response.data.token);
                 setName(axios.get('/api/users').then(response => setName(response.data.find(user => user.username === username).name)));
                 setIsLoggedOut(false);
             }
