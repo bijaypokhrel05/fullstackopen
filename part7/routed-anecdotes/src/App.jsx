@@ -79,10 +79,9 @@ const CreateNew = (props) => {
   // const [content, setContent] = useState('')
   // const [author, setAuthor] = useState('')
   // const [info, setInfo] = useState('')
-  const content = useField('text');
-  const author = useField('text');
-  const info = useField('text');
-
+  const {reset: resetContent, ...content} = useField('text');
+  const {reset: resetAuthor, ...author} = useField('text');
+  const {reset: resetInfo, ...info} = useField('text');
 
   const navigate = useNavigate();
 
@@ -115,6 +114,11 @@ const CreateNew = (props) => {
           <input {...info} />
         </div>
         <button>create</button>
+        <button type='button' onClick={() => {
+          resetContent();
+          resetAuthor();
+          resetInfo();
+        }}>reset</button>
       </form>
     </div>
   )
