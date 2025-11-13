@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-function CreateNew() {
+function CreateNew({setNotification}) {
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [url, setUrl] = useState('');
@@ -17,6 +17,7 @@ function CreateNew() {
                 }
             };
             const response = await axios.post('/api/blogs', {title, author, url}, config);
+            setNotification(`a new blog ${title} by ${author} added`)
             setTitle('');
             setAuthor('');
             setUrl('');
