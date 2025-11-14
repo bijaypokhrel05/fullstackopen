@@ -28,7 +28,7 @@ function CreateNew({setNotification}) {
     }
 
     return (
-        <form style={{marginBottom: '10px'}} onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <h1>create new</h1>
             <div>title:<input value={title} onChange={(e) => setTitle(e.target.value)} /></div> 
             <div>author:<input value={author} onChange={(e) => setAuthor(e.target.value)} /></div>
