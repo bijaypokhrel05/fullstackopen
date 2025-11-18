@@ -26,7 +26,7 @@ const App = () => {
     blogService.getAll().then(allBlogs => {
       setBlogs(allBlogs)
     })
-  }, [])
+  }, [blogs]);
 
   // Notification timeout
   useEffect(() => {
