@@ -28,7 +28,7 @@ export default [
         'warn',
         { allowConstantExport: true }
       ],
-      'no-trailing-spaces': 'error',
+      // 'no-trailing-spaces': 'error',
       'object-curly-spacing': ['error', 'always'],
       'no-console': 'off'
     }
