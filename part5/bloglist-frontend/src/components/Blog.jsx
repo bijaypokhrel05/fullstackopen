@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from 'axios';
 
-const Blog = ({ blog }) => {
+const Blog = ({ blog, setRefresh }) => {
   const [isDetails, setIsDetails] = useState(false);
   const [likes, setLikes] = useState(blog.likes);
 
@@ -20,6 +20,7 @@ const Blog = ({ blog }) => {
 
       const response = await axios.put(`/api/blogs/${id}`, {...blog, likes: likes + 1}, config);
       setLikes(likes + 1);
+      setRefresh(prev => prev + 1);
       console.log(response.data);
     } catch (err) {
       console.log(err);
@@ -34,6 +35,7 @@ const Blog = ({ blog }) => {
         <div>{blog.url}</div>
         <div>likes {likes} <button onClick={() => handleLikes(blog.id)}>likes</button></div>
         <div>{blog.user.name}</div>
+        <button style={{backgroundColor: 'blue', border: '1px solid white', borderRadius: '8px', padding: '2px 0'}}>remove</button>
       </>
   )}
   </div>  

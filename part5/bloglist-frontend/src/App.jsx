@@ -6,30 +6,40 @@ import CreateNew from './components/CreateNew'
 import Togglable from './components/Togglable'
 
 // Separate component for displaying list of blogs
-const Blogs = ({ blogs }) => {
+const Blogs = ({ blogs, setRefresh }) => {
   const sortedBlogs = blogs.sort((a, b) => (b.likes - a.likes));
   return (
     <div>
-    {sortedBlogs.map(blog => (
-      <Blog key={blog.id} blog={blog} />
-    ))}
-  </div>
+      {sortedBlogs.map(blog => (
+        <Blog key={blog.id} blog={blog} setRefresh={setRefresh} />
+      ))}
+    </div>
   )
 }
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
+  const [newBlog, setNewBlog] = useState(null)
   const [name, setName] = useState('')
   const [isLoggedOut, setIsLoggedOut] = useState(true)
   const [notification, setNotification] = useState(null)
   const [blogsVisible, setBlogsVisible] = useState(true)
+  const [refresh, setRefresh] = useState(0);
+
 
   // Fetch blogs once on initial render
   useEffect(() => {
     blogService.getAll().then(allBlogs => {
       setBlogs(allBlogs)
     })
-  }, [blogs]);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (newBlog) {
+      setBlogs(prevBlogs => [...prevBlogs, newBlog])
+    }
+  }, [newBlog])
+
 
   // Notification timeout
   useEffect(() => {
@@ -50,10 +60,10 @@ const App = () => {
   return (
     <div>
       {isLoggedOut ? (
-        <Login 
-          setIsLoggedOut={setIsLoggedOut} 
-          setName={setName} 
-          setNotification={setNotification} 
+        <Login
+          setIsLoggedOut={setIsLoggedOut}
+          setName={setName}
+          setNotification={setNotification}
         />
       ) : (
         <div>
@@ -88,10 +98,10 @@ const App = () => {
             blogsVisible={blogsVisible}
             setBlogsVisible={setBlogsVisible}
           >
-            <CreateNew setNotification={setNotification} />
+            <CreateNew setNotification={setNotification} setNewBlog={setNewBlog}/>
           </Togglable>
 
-          {blogsVisible && <Blogs blogs={blogs} />}
+          {blogsVisible && <Blogs blogs={blogs} setRefresh={setRefresh} />}
         </div>
       )}
     </div>
