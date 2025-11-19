@@ -6,13 +6,16 @@ import CreateNew from './components/CreateNew'
 import Togglable from './components/Togglable'
 
 // Separate component for displaying list of blogs
-const Blogs = ({ blogs }) => (
-  <div>
-    {blogs.map(blog => (
+const Blogs = ({ blogs }) => {
+  const sortedBlogs = blogs.sort((a, b) => (b.likes - a.likes));
+  return (
+    <div>
+    {sortedBlogs.map(blog => (
       <Blog key={blog.id} blog={blog} />
     ))}
   </div>
-)
+  )
+}
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
