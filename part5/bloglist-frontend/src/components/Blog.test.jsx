@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import axios from 'axios'
 import Blog from './Blog'
+
+vi.mock('axios')
 
 describe('Blog', () => {
   const mockBlog = {
@@ -22,6 +25,10 @@ describe('Blog', () => {
     // Clear localStorage before each test
     localStorage.clear()
     vi.clearAllMocks()
+    // Reset axios mock
+    if (axios.put) {
+      axios.put.mockReset()
+    }
   })
 
   it('renders blog title and author by default', () => {
@@ -55,6 +62,25 @@ describe('Blog', () => {
     // URL and likes should now be visible
     expect(screen.getByText('https://test-url.com')).toBeInTheDocument()
     expect(screen.getByText(/likes 5/)).toBeInTheDocument()
+  })
+
+  it('calls the event handler twice when like button is clicked twice', async () => {
+    const user = userEvent.setup()
+    axios.put = vi.fn().mockResolvedValue({ data: { ...mockBlog, likes: 7 } })
+
+    render(<Blog blog={mockBlog} setRefresh={mockSetRefresh} />)
+
+    // First, click view to show the likes button
+    const viewButton = screen.getByText('view')
+    await user.click(viewButton)
+
+    // Find and click the likes button twice
+    const likesButton = screen.getByText('likes')
+    await user.click(likesButton)
+    await user.click(likesButton)
+
+    // Verify that axios.put was called twice
+    expect(axios.put).toHaveBeenCalledTimes(2)
   })
 })
 
