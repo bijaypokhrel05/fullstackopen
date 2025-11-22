@@ -353,6 +353,90 @@ describe('Blog app', () => {
       const removeButtonOtherUser = blogDivOtherUser.getByRole('button', { name: 'remove' });
       await expect(removeButtonOtherUser).not.toBeVisible({ timeout: 5000 });
     });
+
+    test('blogs are arranged in order according to likes, most likes first', async ({ page }) => {
+      // Create three blogs with different titles
+      const blogs = [
+        { title: 'Blog A', author: 'Author A' },
+        { title: 'Blog B', author: 'Author B' },
+        { title: 'Blog C', author: 'Author C' }
+      ];
+
+      // Create all three blogs
+      for (const blog of blogs) {
+        await page.getByRole('button', { name: 'create new blog' }).click();
+        await expect(page.getByRole('heading', { name: 'create new' })).toBeVisible();
+
+        const titleInput = page.locator('div:has-text("title:") input');
+        const authorInput = page.locator('div:has-text("author:") input');
+        const urlInput = page.locator('div:has-text("url:") input');
+
+        await titleInput.fill(blog.title);
+        await authorInput.fill(blog.author);
+        await urlInput.fill('http://testblog.com');
+
+        page.once('dialog', async dialog => {
+          await dialog.accept();
+        });
+
+        await page.getByRole('button', { name: 'create' }).click();
+        await expect(page.getByText(`${blog.title} ${blog.author}`)).toBeVisible({ timeout: 15000 });
+      }
+
+      // Now like the blogs in different amounts:
+      // Blog B: 2 likes (most)
+      // Blog C: 1 like
+      // Blog A: 0 likes (least)
+      
+      // Like Blog B twice
+      let blogBDiv = page.locator('div').filter({ hasText: /Blog B Author B/ }).first();
+      await blogBDiv.getByRole('button', { name: 'view' }).click();
+      await blogBDiv.getByRole('button', { name: 'likes' }).click();
+      await page.waitForTimeout(500); // Small delay between likes
+      await blogBDiv.getByRole('button', { name: 'likes' }).click();
+      await page.waitForTimeout(500);
+      await blogBDiv.getByRole('button', { name: 'hide' }).click(); // Hide details
+
+      // Like Blog C once
+      let blogCDiv = page.locator('div').filter({ hasText: /Blog C Author C/ }).first();
+      await blogCDiv.getByRole('button', { name: 'view' }).click();
+      await blogCDiv.getByRole('button', { name: 'likes' }).click();
+      await page.waitForTimeout(500);
+      await blogCDiv.getByRole('button', { name: 'hide' }).click(); // Hide details
+
+      // Blog A gets 0 likes (don't like it)
+
+      // Wait for the page to update and re-render after likes
+      await page.waitForTimeout(2000);
+
+      // Get all blog containers - find them by their text content
+      const blogAText = page.getByText('Blog A Author A');
+      const blogBText = page.getByText('Blog B Author B');
+      const blogCText = page.getByText('Blog C Author C');
+
+      // Wait for all blogs to be visible
+      await expect(blogAText).toBeVisible();
+      await expect(blogBText).toBeVisible();
+      await expect(blogCText).toBeVisible();
+
+      // Get the parent divs for each blog (the blog container div)
+      const blogADiv = blogAText.locator('..').locator('..');
+      const blogBDivFinal = blogBText.locator('..').locator('..');
+      const blogCDivFinal = blogCText.locator('..').locator('..');
+
+      // Get the bounding boxes to determine vertical position (order on page)
+      // Blogs are displayed top to bottom, so smaller y = higher on page = earlier in list
+      const blogABox = await blogADiv.boundingBox();
+      const blogBBox = await blogBDivFinal.boundingBox();
+      const blogCBox = await blogCDivFinal.boundingBox();
+
+      // Verify the order: Blog B (2 likes) should be first (smallest y)
+      // Blog C (1 like) should be second
+      // Blog A (0 likes) should be last (largest y)
+      
+      expect(blogBBox.y).toBeLessThan(blogCBox.y); // Blog B before Blog C
+      expect(blogCBox.y).toBeLessThan(blogABox.y); // Blog C before Blog A
+    });
   });
 });
 
