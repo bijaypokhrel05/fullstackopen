@@ -39,13 +39,18 @@ describe('Blog app', () => {
     await mongoose.connection.close();
     
     // Create a user using the backend API
-    await request.post('http://localhost:3001/api/users', {
+    const response = await request.post('http://localhost:3001/api/users', {
       data: {
         username: 'testuser',
         password: 'password',
         name: 'Test User'
       }
     });
+    
+    // Ensure the user was created successfully
+    if (response.status() !== 201) {
+      throw new Error(`Failed to create user: ${await response.text()}`);
+    }
 
     // Navigate to the page
     await page.goto('/');
@@ -176,6 +181,49 @@ describe('Blog app', () => {
       // Wait for the new blog to appear in the list
       // The blog displays as "title author" format (from Blog.jsx: {blog.title} {blog.author})
       await expect(page.getByText('Test Blog Title Test Author')).toBeVisible({ timeout: 15000 });
+    });
+
+    test('a blog can be liked', async ({ page }) => {
+      // First, create a blog to like
+      await page.getByRole('button', { name: 'create new blog' }).click();
+      await expect(page.getByRole('heading', { name: 'create new' })).toBeVisible();
+
+      const titleInput = page.locator('div:has-text("title:") input');
+      const authorInput = page.locator('div:has-text("author:") input');
+      const urlInput = page.locator('div:has-text("url:") input');
+
+      await titleInput.fill('Blog to Like');
+      await authorInput.fill('Test Author');
+      await urlInput.fill('http://testblog.com');
+
+      page.once('dialog', async dialog => {
+        await dialog.accept();
+      });
+
+      await page.getByRole('button', { name: 'create' }).click();
+      await expect(page.getByText('Blog to Like Test Author')).toBeVisible({ timeout: 15000 });
+
+      // Find the blog by its text and click "view" to show details
+      // The blog structure: div containing "Blog to Like Test Author" and a "view" button
+      const blogDiv = page.locator('div').filter({ hasText: /Blog to Like Test Author/ }).first();
+      await expect(blogDiv).toBeVisible();
+      
+      // Click the "view" button to show blog details
+      await blogDiv.getByRole('button', { name: 'view' }).click();
+
+      // Wait for the details to appear and check initial likes
+      const likesTextElement = blogDiv.getByText(/likes \d+/);
+      await expect(likesTextElement).toBeVisible({ timeout: 5000 });
+      
+      // Get the initial likes count
+      const likesText = await likesTextElement.textContent();
+      const initialLikes = parseInt(likesText.match(/likes (\d+)/)[1]);
+
+      // Click the "likes" button to increment likes
+      await blogDiv.getByRole('button', { name: 'likes' }).click();
+
+      // Wait for the likes count to increase by 1
+      await expect(blogDiv.getByText(`likes ${initialLikes + 1}`)).toBeVisible({ timeout: 10000 });
     });
   });
 });
