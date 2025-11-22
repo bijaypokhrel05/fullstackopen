@@ -225,6 +225,56 @@ describe('Blog app', () => {
       // Wait for the likes count to increase by 1
       await expect(blogDiv.getByText(`likes ${initialLikes + 1}`)).toBeVisible({ timeout: 10000 });
     });
+
+    test('user who added the blog can delete it', async ({ page }) => {
+      // First, create a blog
+      await page.getByRole('button', { name: 'create new blog' }).click();
+      await expect(page.getByRole('heading', { name: 'create new' })).toBeVisible();
+
+      const titleInput = page.locator('div:has-text("title:") input');
+      const authorInput = page.locator('div:has-text("author:") input');
+      const urlInput = page.locator('div:has-text("url:") input');
+
+      const blogTitle = 'Blog to Delete';
+      const blogAuthor = 'Test Author';
+
+      await titleInput.fill(blogTitle);
+      await authorInput.fill(blogAuthor);
+      await urlInput.fill('http://testblog.com');
+
+      page.once('dialog', async dialog => {
+        await dialog.accept();
+      });
+
+      await page.getByRole('button', { name: 'create' }).click();
+      await expect(page.getByText(`${blogTitle} ${blogAuthor}`)).toBeVisible({ timeout: 15000 });
+
+      // Find the blog and click "view" to show details
+      const blogDiv = page.locator('div').filter({ hasText: new RegExp(`${blogTitle} ${blogAuthor}`) }).first();
+      await expect(blogDiv).toBeVisible();
+      
+      // Click the "view" button to show blog details
+      await blogDiv.getByRole('button', { name: 'view' }).click();
+
+      // Wait for the details to appear and verify the "remove" button is visible
+      // (only visible for the user who created the blog)
+      const removeButton = blogDiv.getByRole('button', { name: 'remove' });
+      await expect(removeButton).toBeVisible({ timeout: 5000 });
+
+      // Set up dialog handler for the confirm dialog
+      page.once('dialog', async dialog => {
+        expect(dialog.type()).toBe('confirm');
+        expect(dialog.message()).toContain(blogTitle);
+        expect(dialog.message()).toContain(blogAuthor);
+        await dialog.accept(); // Accept the confirmation to delete
+      });
+
+      // Click the "remove" button
+      await removeButton.click();
+
+      // Wait for the blog to be removed from the list
+      await expect(page.getByText(`${blogTitle} ${blogAuthor}`)).not.toBeVisible({ timeout: 10000 });
+    });
   });
 });
 
