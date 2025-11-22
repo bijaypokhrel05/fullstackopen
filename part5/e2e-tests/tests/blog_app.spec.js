@@ -275,6 +275,84 @@ describe('Blog app', () => {
       // Wait for the blog to be removed from the list
       await expect(page.getByText(`${blogTitle} ${blogAuthor}`)).not.toBeVisible({ timeout: 10000 });
     });
+
+    test('only the user who added the blog sees the delete button', async ({ page, request }) => {
+      // First, create a blog as testuser
+      await page.getByRole('button', { name: 'create new blog' }).click();
+      await expect(page.getByRole('heading', { name: 'create new' })).toBeVisible();
+
+      const titleInput = page.locator('div:has-text("title:") input');
+      const authorInput = page.locator('div:has-text("author:") input');
+      const urlInput = page.locator('div:has-text("url:") input');
+
+      const blogTitle = 'Blog for Delete Button Test';
+      const blogAuthor = 'Test Author';
+
+      await titleInput.fill(blogTitle);
+      await authorInput.fill(blogAuthor);
+      await urlInput.fill('http://testblog.com');
+
+      page.once('dialog', async dialog => {
+        await dialog.accept();
+      });
+
+      await page.getByRole('button', { name: 'create' }).click();
+      await expect(page.getByText(`${blogTitle} ${blogAuthor}`)).toBeVisible({ timeout: 15000 });
+
+      // Find the blog and click "view" to show details
+      const blogDiv = page.locator('div').filter({ hasText: new RegExp(`${blogTitle} ${blogAuthor}`) }).first();
+      await expect(blogDiv).toBeVisible();
+      
+      // Click the "view" button to show blog details
+      await blogDiv.getByRole('button', { name: 'view' }).click();
+
+      // Verify the "remove" button IS visible for the user who created the blog
+      const removeButton = blogDiv.getByRole('button', { name: 'remove' });
+      await expect(removeButton).toBeVisible({ timeout: 5000 });
+
+      // Now logout
+      await page.getByRole('button', { name: 'logout' }).click();
+      
+      // Verify we're logged out (login form should be visible)
+      await expect(page.getByRole('heading', { name: 'log in to application' })).toBeVisible({ timeout: 10000 });
+
+      // Create a second user
+      const secondUserResponse = await request.post('http://localhost:3001/api/users', {
+        data: {
+          username: 'otheruser',
+          password: 'password',
+          name: 'Other User'
+        }
+      });
+      
+      if (secondUserResponse.status() !== 201) {
+        throw new Error(`Failed to create second user: ${await secondUserResponse.text()}`);
+      }
+
+      // Login as the second user
+      page.once('dialog', async dialog => {
+        expect(dialog.message()).toContain('otheruser');
+        await dialog.accept();
+      });
+
+      await page.locator('input[type="text"]').fill('otheruser');
+      await page.locator('input[type="password"]').fill('password');
+      await page.locator('button[type="submit"]').click();
+
+      // Wait for login to complete
+      await expect(page.getByRole('heading', { name: 'blogs' })).toBeVisible({ timeout: 30000 });
+
+      // Find the same blog (created by testuser) and click "view"
+      const blogDivOtherUser = page.locator('div').filter({ hasText: new RegExp(`${blogTitle} ${blogAuthor}`) }).first();
+      await expect(blogDivOtherUser).toBeVisible();
+      
+      // Click the "view" button to show blog details
+      await blogDivOtherUser.getByRole('button', { name: 'view' }).click();
+
+      // Verify the "remove" button is NOT visible for the other user
+      const removeButtonOtherUser = blogDivOtherUser.getByRole('button', { name: 'remove' });
+      await expect(removeButtonOtherUser).not.toBeVisible({ timeout: 5000 });
+    });
   });
 });
 
