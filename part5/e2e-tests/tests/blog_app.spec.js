@@ -1,21 +1,17 @@
 // tests/blog_app.spec.js
 // Load environment variables first
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../backend/.env') });
-process.env.NODE_ENV = 'test';
 
 const { test, expect, describe, beforeEach } = require('@playwright/test');
 const mongoose = require('mongoose');
-const User = require('../../backend/models/user');
-const Blog = require('../../backend/models/blog');
-const bcrypt = require('bcrypt');
 
 describe('Blog app', () => {
   beforeEach(async ({ page, request }) => {
-    // Connect to MongoDB using test database URL
-    const MONGODB_TEST_URL = process.env.MONGODB_TEST_URL || process.env.MONGODB_URL;
+    // Connect to MongoDB using the same URL from backend
+    const MONGODB_URL = process.env.MONGODB_URL;
     
-    if (!MONGODB_TEST_URL) {
-      throw new Error('MONGODB_TEST_URL or MONGODB_URL must be set in environment variables');
+    if (!MONGODB_URL) {
+      throw new Error('MONGODB_URL must be set in environment variables');
     }
     
     // Close existing connection if any
@@ -24,7 +20,7 @@ describe('Blog app', () => {
     }
     
     // Connect to MongoDB and wait for connection
-    await mongoose.connect(MONGODB_TEST_URL);
+    await mongoose.connect(MONGODB_URL);
     await new Promise((resolve, reject) => {
       if (mongoose.connection.readyState === 1) {
         resolve();
@@ -39,13 +35,16 @@ describe('Blog app', () => {
     await db.collection('blogs').deleteMany({});
     await db.collection('users').deleteMany({});
     
-    // Create a user for the backend
-    const passwordHash = await bcrypt.hash('password', 10);
-    await db.collection('users').insertOne({
-      username: 'testuser',
-      password: passwordHash,
-      name: 'Test User',
-      blogs: []
+    // Close MongoDB connection
+    await mongoose.connection.close();
+    
+    // Create a user using the backend API
+    await request.post('http://localhost:3001/api/users', {
+      data: {
+        username: 'testuser',
+        password: 'password',
+        name: 'Test User'
+      }
     });
 
     // Navigate to the page
@@ -127,20 +126,29 @@ describe('Blog app', () => {
   });
 
   describe('When logged in', () => {
-    test('a blog can be created', async ({ page }) => {
-      // Set up dialog handler for login alert
+    beforeEach(async ({ page }) => {
+      // Set up dialog handler for login alert BEFORE any actions
       page.once('dialog', async dialog => {
+        expect(dialog.message()).toContain('testuser');
         await dialog.accept();
       });
 
       // Fill in login form
       await page.locator('input[type="text"]').fill('testuser');
       await page.locator('input[type="password"]').fill('password');
+      
+      // Click submit
       await page.locator('button[type="submit"]').click();
 
-      // Wait for the "create new blog" button to appear (indicating we're logged in)
-      await expect(page.getByRole('button', { name: 'create new blog' })).toBeVisible({ timeout: 30000 });
+      // Wait for the "blogs" heading to appear (indicating successful login)
+      // This is the main indicator - if login succeeds, this will appear
+      await expect(page.getByRole('heading', { name: 'blogs' })).toBeVisible({ timeout: 30000 });
       
+      // Wait for the "create new blog" button to appear (indicating we're logged in)
+      await expect(page.getByRole('button', { name: 'create new blog' })).toBeVisible({ timeout: 10000 });
+    });
+
+    test('a new blog can be created', async ({ page }) => {
       // Click the button to show the blog creation form
       await page.getByRole('button', { name: 'create new blog' }).click();
 
@@ -148,7 +156,6 @@ describe('Blog app', () => {
       await expect(page.getByRole('heading', { name: 'create new' })).toBeVisible();
 
       // Fill in the blog details
-      // The inputs are in divs with text labels, so we need to find them by their position or by the label text
       const titleInput = page.locator('div:has-text("title:") input');
       const authorInput = page.locator('div:has-text("author:") input');
       const urlInput = page.locator('div:has-text("url:") input');
@@ -158,7 +165,7 @@ describe('Blog app', () => {
       await urlInput.fill('http://testblog.com');
 
       // Set up dialog handler for the success alert
-      page.on('dialog', async dialog => {
+      page.once('dialog', async dialog => {
         expect(dialog.message()).toContain('Test Blog Title');
         await dialog.accept();
       });
@@ -167,8 +174,8 @@ describe('Blog app', () => {
       await page.getByRole('button', { name: 'create' }).click();
 
       // Wait for the new blog to appear in the list
-      // The blog displays as "title author" format
-      await expect(page.getByText('Test Blog Title Test Author')).toBeVisible({ timeout: 10000 });
+      // The blog displays as "title author" format (from Blog.jsx: {blog.title} {blog.author})
+      await expect(page.getByText('Test Blog Title Test Author')).toBeVisible({ timeout: 15000 });
     });
   });
 });
